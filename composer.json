@@ -1,0 +1,31 @@
+{
+    "name": "abs/role-pkg",
+    "description": "For Role CRUD",
+    "type": "library",
+    "require":
+    {},
+    "require-dev":
+    {},
+    "authors": [
+    {
+        "name": "Abdul",
+        "email": "abdulpro@gmail.com"
+    }],
+    "minimum-stability": "dev",
+    "extra":
+    {
+        "laravel":
+        {
+            "providers": [
+                "Abs\\RolePkg\\RolePkgServiceProvider"
+            ]
+        }
+    },
+    "autoload":
+    {
+        "psr-4":
+        {
+            "Abs\\RolePkg\\": "src/"
+        }
+    }
+}
