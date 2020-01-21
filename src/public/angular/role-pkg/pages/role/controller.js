@@ -1,7 +1,7 @@
 app.config(['$routeProvider', function($routeProvider) {
 
     $routeProvider.
-    //CUSTOMER
+    //ROLES
     when('/role-pkg/role/list', {
         template: '<role-list></role-list>',
         title: 'Roles',
