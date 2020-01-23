@@ -17,6 +17,7 @@ class RolePkgServiceProvider extends ServiceProvider {
 		$this->loadViewsFrom(__DIR__ . '/views', 'role-pkg');
 		$this->publishes([
 			__DIR__ . '/public' => base_path('public'),
+			__DIR__ . '/database/seeds/client' => 'database/seeds',
 		]);
 	}
 
