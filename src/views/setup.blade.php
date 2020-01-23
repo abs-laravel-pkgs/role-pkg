@@ -9,5 +9,7 @@
     var role_get_form_data_url = "{{url('role-pkg/role/get-form-data/')}}";
     var role_form_template_url = "{{URL::asset($role_pkg_prefix.'/public/angular/role-pkg/pages/role/form.html')}}";
     var role_delete_data_url = "{{url('role-pkg/role/delete/')}}";
+    var role_view_template_url = "{{URL::asset($role_pkg_prefix.'/public/angular/role-pkg/pages/role/view.html')}}";
+    var role_view_data_url = "{{url('role-pkg/role/view/')}}";
 </script>
 <script type="text/javascript" src="{{URL::asset($role_pkg_prefix.'/public/angular/role-pkg/pages/role/controller.js?v=2')}}"></script>

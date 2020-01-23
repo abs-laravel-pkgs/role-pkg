@@ -30,30 +30,22 @@
                             <div class="row custom-row">
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label>Name<span class="mandatory">*</span></label>
-                                        <input type="text" name="display_name" ng-model='$ctrl.role.display_name' class="form-control required" placeholder="Enter Display Name" autocomplete="off" dusk="name">
+                                        <label>Name</label>
+                                        <input type="text" name="display_name" ng-model='$ctrl.role.display_name' class="form-control required" placeholder="Enter Display Name" autocomplete="off" dusk="name" readonly>
                                     </div><!-- Field -->
                                     <div class="name_error"></div>
                                 </div><!-- Column -->
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label>Description<span class="mandatory">*</span></label>
-                                        <input type="text" name="description" ng-model='$ctrl.role.description' class="form-control required" placeholder="Enter Description" autocomplete="off" dusk="description">
+                                        <label>Description</label>
+                                        <input type="text" name="description" ng-model='$ctrl.role.description' class="form-control required" placeholder="Enter Description" autocomplete="off" dusk="description" readonly>
                                     </div><!-- Field -->
                                     <div class="description_error"></div>
                                 </div><!-- Column -->
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         <label>Status</label>
-                                        <div class="radio-switch" dusk="status">
-                                            <input type="radio" name="status" ng-model='$ctrl.status' ng-checked="$ctrl.role.deleted_at == NULL" value="1" autocomplete="off" id="active">
-                                            <label for="active">Active</label>
-                                            <input type="radio" name="status" ng-model='$ctrl.status' ng-checked="$ctrl.role.deleted_at != NULL" value="0" class="input-2" autocomplete="off" id="inactive">
-                                            <label for="inactive">Inactive</label>
-                                            <div class="radio-switch-toggle-outer">
-                                                <div class="radio-switch-toggle"></div>
-                                            </div>
-                                        </div><!-- Radio Button -->
+                                        <input type="text" name="status" ng-model='$ctrl.status' class="form-control required" autocomplete="off" dusk="status" readonly>
                                     </div><!-- Field -->
                                 </div><!-- Column -->
                             </div><!-- Row -->
@@ -66,7 +58,7 @@
                                     <ul class="roll-box-list">
                                         <li class="checkbox_parent checkbox1 roll-box" ng-repeat="(parent_key,parent_permission) in $ctrl.parent_permission_group_list">
                                             <div class="checkbox">
-                                                <input type="checkbox" name="permission_ids[]" id="perm_{{parent_permission.id}}" value="{{parent_permission.id}}" ng-checked="valueChecked(parent_permission.id)!=-1" class="parent_check parent_checkbox pc_{{parent_permission.id}}" data-ids="{{parent_permission.id}}">
+                                                <input type="checkbox" name="permission_ids[]" id="perm_{{parent_permission.id}}" value="{{parent_permission.id}}" ng-checked="valueChecked(parent_permission.id)!=-1" class="parent_check parent_checkbox pc_{{parent_permission.id}}" data-ids="{{parent_permission.id}}" disabled>
                                                 <label for="perm_{{parent_permission.id}}">
                                                     <span class="check"></span>
                                                     {{parent_permission.display_name}}
@@ -80,7 +72,7 @@
                                             <ul class="{{parent_permission.id}} permission-set-ul roll-box-sub-list" ng-show="show_child_{{parent_permission.id}}">
                                                 <li class="checkbox-permission-set-li roll-box" ng-repeat="(sub_parent_key, permission_list) in $ctrl.permission_list[parent_permission.id]">
                                                     <div class="checkbox">
-                                                        <input type="checkbox" name="permission_ids[]" value="{{permission_list.id}}" ng-checked="valueChecked(permission_list.id)!=-1" class="sub_childs_{{parent_permission.id}} sub_parent permission_check_class sc_{{permission_list.id}} checkbox" data-ids="{{permission_list.id}}" id="sub_parent_{{permission_list.id}}">
+                                                        <input type="checkbox" name="permission_ids[]" value="{{permission_list.id}}" ng-checked="valueChecked(permission_list.id)!=-1" class="sub_childs_{{parent_permission.id}} sub_parent permission_check_class sc_{{permission_list.id}} checkbox" data-ids="{{permission_list.id}}" id="sub_parent_{{permission_list.id}}" disabled>
                                                         <label for="sub_parent_{{permission_list.id}}">
                                                             <span class="check"></span>
                                                             {{permission_list.display_name}}
@@ -94,7 +86,7 @@
                                                     <ul class="checkbox-sub-set roll-box-sub-list" ng-show="show_grand_child_{{permission_list.id}}">
                                                         <li class="checkbox_sub_child roll-box" id="li-sub2" ng-repeat="(child_key, permission_sub_list) in $ctrl.permission_sub_list[permission_list.id]">
                                                             <div class="checkbox">
-                                                                <input type="checkbox" name="permission_ids[]" value="{{permission_sub_list.id}}" ng-checked="valueChecked(permission_sub_list.id)!=-1" class="sub_childs_{{parent_permission.id}} sub_parent_childs_{{permission_list.id}} child_{{permission_sub_list.id}} check_its_child sub_child sub_test_{{parent_permission.id}} " data-item="{{permission_sub_list.id}}" data-ids="{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}" id="child_{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}">
+                                                                <input type="checkbox" name="permission_ids[]" value="{{permission_sub_list.id}}" ng-checked="valueChecked(permission_sub_list.id)!=-1" class="sub_childs_{{parent_permission.id}} sub_parent_childs_{{permission_list.id}} child_{{permission_sub_list.id}} check_its_child sub_child sub_test_{{parent_permission.id}} " data-item="{{permission_sub_list.id}}" data-ids="{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}" id="child_{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}" disabled>
                                                                 <label for="child_{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}">
                                                                     <span class="check"></span>
                                                                     {{permission_sub_list.display_name}}
@@ -108,7 +100,7 @@
                                                             <ul class="checkbox-sub-set roll-box-sub-list" ng-show="show_grand_child2_{{permission_sub_list.id}}">
                                                                 <li class="checkbox_sub_child roll-box" id="li-sub2" ng-repeat="(sub_child_key, permission_sub_child_list) in $ctrl.permission_sub_child_list[permission_sub_list.id]">
                                                                     <div class="checkbox">
-                                                                        <input type="checkbox" name="permission_ids[]" value="{{permission_sub_child_list.id}}" ng-checked="valueChecked(permission_sub_child_list.id)!=-1" class="sub_childs_test_{{parent_permission.id}} sub_parent_childs2_{{permission_list.id}}  childs2_{{permission_sub_list.id}} super_sub_child" data-ids="{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}_{{permission_sub_child_list.id}}" id="sub_child_{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}_{{permission_sub_child_list.id}}">
+                                                                        <input type="checkbox" name="permission_ids[]" value="{{permission_sub_child_list.id}}" ng-checked="valueChecked(permission_sub_child_list.id)!=-1" class="sub_childs_test_{{parent_permission.id}} sub_parent_childs2_{{permission_list.id}}  childs2_{{permission_sub_list.id}} super_sub_child" data-ids="{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}_{{permission_sub_child_list.id}}" id="sub_child_{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}_{{permission_sub_child_list.id}}" disabled>
                                                                         <label for="sub_child_{{permission_list.id}}_{{parent_permission.id}}_{{permission_sub_list.id}}_{{permission_sub_child_list.id}}">
                                                                             <span class="check"></span>
                                                                             {{permission_sub_child_list.display_name}}
@@ -129,7 +121,7 @@
                             <div class="row custom-row">
                                 <div class="col-md-12">
                                     <div class="text-right">
-                                        <button type="submit" id="submit" class="btn btn-secondary btn-end" dusk="submit-btn">Save</button>
+                                        <a href="#!/role-pkg/role/edit/{{$ctrl.role.id}}" role="button" class="btn btn-secondary">Edit</a>
                                     </div><!-- Text Right -->
                                 </div><!-- Column -->
                             </div><!-- Row -->

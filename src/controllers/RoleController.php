@@ -2,13 +2,12 @@
 
 namespace Abs\RolePkg;
 use Abs\RolePkg\Role;
-use App\Address;
-use App\Country;
 use App\Http\Controllers\Controller;
+use App\Permission;
 use Auth;
-use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Validator;
 use Yajra\Datatables\Datatables;
 
@@ -17,177 +16,210 @@ class RoleController extends Controller {
 	public function __construct() {
 	}
 
-	public function getRoleList(Request $request) {
-		$roles = Role::withTrashed()
-			->select(
-				'roles.id',
-				'roles.code',
-				'roles.name',
-				DB::raw('IF(roles.mobile_no IS NULL,"--",roles.mobile_no) as mobile_no'),
-				DB::raw('IF(roles.email IS NULL,"--",roles.email) as email'),
-				DB::raw('IF(roles.deleted_at IS NULL,"Active","Inactive") as status')
-			)
-			->where('roles.company_id', Auth::user()->company_id)
-			->where(function ($query) use ($request) {
-				if (!empty($request->role_code)) {
-					$query->where('roles.code', 'LIKE', '%' . $request->role_code . '%');
-				}
-			})
-			->where(function ($query) use ($request) {
-				if (!empty($request->role_name)) {
-					$query->where('roles.name', 'LIKE', '%' . $request->role_name . '%');
-				}
-			})
-			->where(function ($query) use ($request) {
-				if (!empty($request->mobile_no)) {
-					$query->where('roles.mobile_no', 'LIKE', '%' . $request->mobile_no . '%');
-				}
-			})
-			->where(function ($query) use ($request) {
-				if (!empty($request->email)) {
-					$query->where('roles.email', 'LIKE', '%' . $request->email . '%');
-				}
-			})
-			->orderby('roles.id', 'desc');
+	public function getRolesList(Request $request) {
 
+		$roles = Role::withTrashed()->select('roles.id', 'roles.display_name as role', DB::raw('IF(roles.deleted_at IS NULL,"Active","Inactive") as status'),
+			DB::raw('IF(roles.description IS NULL,"N/A",roles.description) as description'),
+			'roles.fixed_roles')
+			->orderBy('roles.display_order', 'ASC');
 		return Datatables::of($roles)
-			->addColumn('code', function ($role) {
-				$status = $role->status == 'Active' ? 'green' : 'red';
-				return '<span class="status-indicator ' . $status . '"></span>' . $role->code;
+			->addColumn('action', function ($roles) {
+
+				$img1 = asset('public/img/content/table/edit-yellow.svg');
+				$img1_active = asset('public/img/content/table/edit-yellow-active.svg');
+				$img2 = asset('public/img/content/table/eye.svg');
+				$img2_active = asset('public/img/content/table/eye-active.svg');
+				$img_delete = asset('public/img/content/table/delete-default.svg');
+				$img_delete_active = asset('public/img/content/table/delete-active.svg');
+				$output = '';
+				if ($roles->fixed_roles == 0) {
+					$output .= '<a href="#!/role-pkg/role/edit/' . $roles->id . '" id = "" ><img src="' . $img1 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img1_active . '" onmouseout=this.src="' . $img1 . '"></a>
+					<a href="#!/role-pkg/role/view/' . $roles->id . '" id = "" ><img src="' . $img2 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img2_active . '" onmouseout=this.src="' . $img2 . '"></a>
+					<a href="javascript:;"  data-toggle="modal" data-target="#role-delete-modal" onclick="angular.element(this).scope().deleteRoleconfirm(' . $roles->id . ')" title="Delete"><img src="' . $img_delete . '" alt="Delete" class="img-responsive delete" onmouseover=this.src="' . $img_delete_active . '" onmouseout=this.src="' . $img_delete . '"></a>';
+				} else {
+					$output .= '<a href="#!/role-pkg/role/view/' . $roles->id . '" id = "" ><img src="' . $img2 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img2_active . '" onmouseout=this.src="' . $img2 . '"></a>';
+				}
+				return $output;
 			})
-			->addColumn('action', function ($role) {
-				$edit_img = asset('public/theme/img/table/cndn/edit.svg');
-				$delete_img = asset('public/theme/img/table/cndn/delete.svg');
-				return '
-					<a href="#!/role-pkg/role/edit/' . $role->id . '">
-						<img src="' . $edit_img . '" alt="View" class="img-responsive">
-					</a>
-					<a href="javascript:;" data-toggle="modal" data-target="#delete_role"
-					onclick="angular.element(this).scope().deleteRole(' . $role->id . ')" dusk = "delete-btn" title="Delete">
-					<img src="' . $delete_img . '" alt="delete" class="img-responsive">
-					</a>
-					';
+			->addColumn('status', function ($role) {
+				$status = $role->status == 'Active' ? 'color-green' : 'color-red';
+				return '<span class="status-indigator ' . $status . '">' . $role->status . '</span>';
+
 			})
 			->make(true);
 	}
 
 	public function getRoleFormData($id = NULL) {
 		if (!$id) {
-			$role = new Role;
-			$address = new Address;
-			$action = 'Add';
+			$data['role'] = new Role;
+			$this->data['status'] = 'Active';
+			$data['action'] = 'Add';
+			$data['selected_permissions'] = [];
 		} else {
-			$role = Role::withTrashed()->find($id);
-			$address = Address::where('address_of_id', 24)->where('entity_id', $id)->first();
-			if (!$address) {
-				$address = new Address;
+			$data['role'] = $role = Role::withTrashed()->where('id', $id)->first();
+			if (!$data['role']) {
+				return response()->json(['success' => false, 'error' => 'Roles Not Found']);
 			}
-			$action = 'Edit';
+			$data['selected_permissions'] = $role->permissions()->pluck('id')->toArray();
+			$data['action'] = 'Edit';
+			if ($role->deleted_at == NULL) {
+				$this->data['status'] = 'Active';
+			} else {
+				$this->data['status'] = 'Inactive';
+			}
 		}
-		$this->data['country_list'] = $country_list = Collect(Country::select('id', 'name')->get())->prepend(['id' => '', 'name' => 'Select Country']);
-		$this->data['role'] = $role;
-		$this->data['address'] = $address;
-		$this->data['action'] = $action;
+		$data['parent_permission_group_list'] = Permission::select('parent_id', 'id', 'display_name')->whereNull('parent_id')->get();
+		foreach ($data['parent_permission_group_list'] as $key => $value) {
+			$permission_group_id = $data['parent_permission_group_list'][$key]['id'];
+			$permission_list[$permission_group_id] = Permission::where('parent_id', $permission_group_id)->get();
 
-		return response()->json($this->data);
+			foreach ($permission_list[$permission_group_id] as $permission_list_key => $permission_list_value) {
+				$permission_group_sub_id = $permission_list_value['id'];
+				$permission_sub_list[$permission_group_sub_id] = Permission::where('parent_id', $permission_group_sub_id)
+				//->where('display_order', '!=', 0)
+					->orderBy('display_order', 'ASC')->get();
+
+				foreach ($permission_sub_list[$permission_group_sub_id] as $key => $sub_value) {
+					$permission_group_sub_child_id = $sub_value['id'];
+					$permission_sub_child_list[$permission_group_sub_child_id] = Permission::where('parent_id', $permission_group_sub_child_id)
+
+						->orderBy('display_order', 'ASC')->get();
+
+				}
+
+			}
+
+		}
+
+		$data['permission_list'] = $permission_list;
+		$data['permission_sub_list'] = $permission_sub_list;
+		$data['permission_sub_child_list'] = $permission_sub_child_list;
+		$data['success'] = true;
+		return response()->json($data);
 	}
 
 	public function saveRole(Request $request) {
 		// dd($request->all());
 		try {
 			$error_messages = [
-				'code.required' => 'Role Code is Required',
-				'code.max' => 'Maximum 255 Characters',
-				'code.min' => 'Minimum 3 Characters',
-				'code.unique' => 'Role Code is already taken',
-				'name.required' => 'Role Name is Required',
-				'name.max' => 'Maximum 255 Characters',
-				'name.min' => 'Minimum 3 Characters',
-				'gst_number.required' => 'GST Number is Required',
-				'gst_number.max' => 'Maximum 191 Numbers',
-				'mobile_no.max' => 'Maximum 25 Numbers',
-				// 'email.required' => 'Email is Required',
-				'address_line1.required' => 'Address Line 1 is Required',
-				'address_line1.max' => 'Maximum 255 Characters',
-				'address_line1.min' => 'Minimum 3 Characters',
-				'address_line2.max' => 'Maximum 255 Characters',
-				// 'pincode.required' => 'Pincode is Required',
-				// 'pincode.max' => 'Maximum 6 Characters',
-				// 'pincode.min' => 'Minimum 6 Characters',
+				'display_name.required' => 'Role name is required',
+				'display_name.unique' => 'Role name has already been taken',
+				'display_name.max' => 'Maximum length of Role name is 255',
+				'permission_id.required' => 'select atleast one page to set permission',
+				'description.required' => 'Description is required',
+				'description.max' => 'Maximum length of description is 255',
+
 			];
 			$validator = Validator::make($request->all(), [
-				'code' => [
-					'required:true',
+				'display_name' => [
+					'required',
+					Rule::unique('roles')->ignore($request->id),
 					'max:255',
-					'min:3',
-					'unique:roles,code,' . $request->id . ',id,company_id,' . Auth::user()->company_id,
 				],
-				'name' => 'required|max:255|min:3',
-				'gst_number' => 'required|max:191',
-				'mobile_no' => 'nullable|max:25',
-				// 'email' => 'nullable',
-				'address' => 'required',
-				'address_line1' => 'required|max:255|min:3',
-				'address_line2' => 'max:255',
-				// 'pincode' => 'required|max:6|min:6',
-			], $error_messages);
+				'description' => [
+					'required',
+					'max:255',
+				],
+			]);
+			DB::beginTransaction();
 			if ($validator->fails()) {
 				return response()->json(['success' => false, 'errors' => $validator->errors()->all()]);
 			}
-
-			DB::beginTransaction();
-			if (!$request->id) {
-				$role = new Role;
-				$role->created_by_id = Auth::user()->id;
-				$role->created_at = Carbon::now();
-				$role->updated_at = NULL;
-				$address = new Address;
+			if (empty($request->id)) {
+				$roles = new Role;
 			} else {
-				$role = Role::withTrashed()->find($request->id);
-				$role->updated_by_id = Auth::user()->id;
-				$role->updated_at = Carbon::now();
-				$address = Address::where('address_of_id', 24)->where('entity_id', $request->id)->first();
+				$roles = Role::withTrashed()->where('id', $request->id)->first();
+
+				$roles->permissions()->sync([]);
 			}
-			$role->fill($request->all());
-			$role->company_id = Auth::user()->company_id;
-			if ($request->status == 'Inactive') {
-				$role->deleted_at = Carbon::now();
-				$role->deleted_by_id = Auth::user()->id;
+			if ($request->status == '1') {
+
+				$roles->deleted_at = NULL;
+				$roles->deleted_by = NULL;
 			} else {
-				$role->deleted_by_id = NULL;
-				$role->deleted_at = NULL;
+				$roles->deleted_at = date('Y-m-d H:i:s');
+				$roles->deleted_by = Auth::user()->id;
 			}
-			$role->gst_number = $request->gst_number;
-			$role->axapta_location_id = $request->axapta_location_id;
-			$role->save();
-
-			if (!$address) {
-				$address = new Address;
-			}
-			$address->fill($request->all());
-			$address->company_id = Auth::user()->company_id;
-			$address->address_of_id = 24;
-			$address->entity_id = $role->id;
-			$address->address_type_id = 40;
-			$address->name = 'Primary Address';
-			$address->save();
-
+			// $role_name = ucfirst(str_replace(' ', '_', strtolower($request->display_name)));
+			// dd($role_name);
+			// $roles->name = $role_name;
+			$roles->created_by = Auth::user()->id;
+			$roles->fill($request->all());
+			$roles->display_name = $request->display_name;
+			$roles->name = $request->display_name;
+			$roles->description = $request->description;
+			// if ($request->deleted_at == 1) {
+			// 	$roles->deleted_at = null;
+			// } else {
+			// 	$roles->deleted_at = date('Y-m-d');
+			// }
+			$roles->save();
+			$roles->permissions()->attach($request->permission_ids);
+			//dd($request->permission_ids);
 			DB::commit();
-			if (!($request->id)) {
-				return response()->json(['success' => true, 'message' => ['Role Details Added Successfully']]);
+			if (empty($request->id)) {
+				return response()->json(['success' => true, 'message' => 'Role added successfully']);
 			} else {
-				return response()->json(['success' => true, 'message' => ['Role Details Updated Successfully']]);
+				return response()->json(['success' => true, 'message' => 'Role updated successfully']);
 			}
-		} catch (Exceprion $e) {
+			// $request->session()->flash('success', 'Role is saved successfully');
+			// return response()->json(['success' => true]);
+		} catch (Exception $e) {
 			DB::rollBack();
 			return response()->json(['success' => false, 'errors' => ['Exception Error' => $e->getMessage()]]);
 		}
 	}
+	public function viewRole($id) {
+		$data['role'] = $role = Role::withTrashed()->where('id', $id)->first();
+		if (!$data['role']) {
+			return response()->json(['success' => false, 'error' => 'Roles Not Found']);
+		}
+		$data['selected_permissions'] = $role->permissions()->pluck('id')->toArray();
+		$data['action'] = 'Edit';
+		if ($role->deleted_at == NULL) {
+			$this->data['status'] = 'Active';
+		} else {
+			$this->data['status'] = 'Inactive';
+		}
+		$data['parent_permission_group_list'] = Permission::select('parent_id', 'id', 'display_name')->whereNull('parent_id')->get();
+		foreach ($data['parent_permission_group_list'] as $key => $value) {
+			$permission_group_id = $data['parent_permission_group_list'][$key]['id'];
+			$permission_list[$permission_group_id] = Permission::where('parent_id', $permission_group_id)->get();
+
+			foreach ($permission_list[$permission_group_id] as $permission_list_key => $permission_list_value) {
+				$permission_group_sub_id = $permission_list_value['id'];
+				$permission_sub_list[$permission_group_sub_id] = Permission::where('parent_id', $permission_group_sub_id)
+				//->where('display_order', '!=', 0)
+					->orderBy('display_order', 'ASC')->get();
+
+				foreach ($permission_sub_list[$permission_group_sub_id] as $key => $sub_value) {
+					$permission_group_sub_child_id = $sub_value['id'];
+					$permission_sub_child_list[$permission_group_sub_child_id] = Permission::where('parent_id', $permission_group_sub_child_id)
+
+						->orderBy('display_order', 'ASC')->get();
+
+				}
+
+			}
+
+		}
+
+		$data['permission_list'] = $permission_list;
+		$data['permission_sub_list'] = $permission_sub_list;
+		$data['permission_sub_child_list'] = $permission_sub_child_list;
+		$data['action'] = 'View';
+		$data['success'] = true;
+		return response()->json($data);
+	}
 	public function deleteRole($id) {
-		$delete_status = Role::withTrashed()->where('id', $id)->forceDelete();
-		if ($delete_status) {
-			$address_delete = Address::where('address_of_id', 24)->where('entity_id', $id)->forceDelete();
-			return response()->json(['success' => true]);
+		DB::beginTransaction();
+		try {
+			$delete_status = Role::withTrashed()->where('id', $id)->forceDelete();
+			DB::commit();
+			return response()->json(['success' => true, 'message' => 'Role deleted successfully']);
+		} catch (Exception $e) {
+			DB::rollBack();
+			return response()->json(['success' => false, 'errors' => ['Exception Error' => $e->getMessage()]]);
 		}
 	}
 }
