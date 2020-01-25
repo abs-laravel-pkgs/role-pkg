@@ -14,25 +14,30 @@ use Yajra\Datatables\Datatables;
 class RoleController extends Controller {
 
 	public function __construct() {
+		$this->data['theme'] = config('custom.admin_theme');
 	}
 
 	public function getRolesList(Request $request) {
 
-		$roles = Role::withTrashed()->select('roles.id', 'roles.display_name as role', DB::raw('IF(roles.deleted_at IS NULL,"Active","Inactive") as status'),
+		$roles = Role::withTrashed()->select([
+			'roles.id',
+			'roles.display_name as role',
+			DB::raw('IF(roles.deleted_at IS NULL,"Active","Inactive") as status'),
 			DB::raw('IF(roles.description IS NULL,"N/A",roles.description) as description'),
-			'roles.fixed_roles')
+			'roles.company_id',
+		])
 			->orderBy('roles.display_order', 'ASC');
 		return Datatables::of($roles)
 			->addColumn('action', function ($roles) {
 
-				$img1 = asset('public/img/content/table/edit-yellow.svg');
-				$img1_active = asset('public/img/content/table/edit-yellow-active.svg');
-				$img2 = asset('public/img/content/table/eye.svg');
-				$img2_active = asset('public/img/content/table/eye-active.svg');
-				$img_delete = asset('public/img/content/table/delete-default.svg');
-				$img_delete_active = asset('public/img/content/table/delete-active.svg');
+				$img1 = asset('public/themes/' . $this->data['theme'] . '/img/content/table/edit-yellow.svg');
+				$img1_active = asset('public/themes/' . $this->data['theme'] . '/img/content/table/edit-yellow-active.svg');
+				$img2 = asset('public/themes/' . $this->data['theme'] . '/img/content/table/eye.svg');
+				$img2_active = asset('public/themes/' . $this->data['theme'] . '/img/content/table/eye-active.svg');
+				$img_delete = asset('public/themes/' . $this->data['theme'] . '/img/content/table/delete-default.svg');
+				$img_delete_active = asset('public/themes/' . $this->data['theme'] . '/img/content/table/delete-active.svg');
 				$output = '';
-				if ($roles->fixed_roles == 0) {
+				if (!$roles->company_id) {
 					$output .= '<a href="#!/role-pkg/role/edit/' . $roles->id . '" id = "" ><img src="' . $img1 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img1_active . '" onmouseout=this.src="' . $img1 . '"></a>
 					<a href="#!/role-pkg/role/view/' . $roles->id . '" id = "" ><img src="' . $img2 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img2_active . '" onmouseout=this.src="' . $img2 . '"></a>
 					<a href="javascript:;"  data-toggle="modal" data-target="#role-delete-modal" onclick="angular.element(this).scope().deleteRoleconfirm(' . $roles->id . ')" title="Delete"><img src="' . $img_delete . '" alt="Delete" class="img-responsive delete" onmouseover=this.src="' . $img_delete_active . '" onmouseout=this.src="' . $img_delete . '"></a>';
