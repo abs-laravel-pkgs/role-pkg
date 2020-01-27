@@ -43,7 +43,7 @@ app.component('roleList', {
             paging: true,
             ordering: false,
             ajax: {
-                url: url(laravel_routes['getRoleList']),
+                url: laravel_routes['getRoleList'],
                 data: function(d) {}
             },
             columns: [

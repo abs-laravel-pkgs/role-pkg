@@ -38,8 +38,8 @@ class RoleController extends Controller {
 				$img_delete_active = asset('public/themes/' . $this->data['theme'] . '/img/content/table/delete-active.svg');
 				$output = '';
 				if (!$roles->company_id) {
-					$output .= '<a href="#!/role-pkg/role/edit/' . $roles->id . '" id = "" ><img src="' . $img1 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img1_active . '" onmouseout=this.src="' . $img1 . '"></a>
-					<a href="#!/role-pkg/role/view/' . $roles->id . '" id = "" ><img src="' . $img2 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img2_active . '" onmouseout=this.src="' . $img2 . '"></a>
+					$output .= '<a href="#!/role-pkg/role/edit/' . $roles->id . '" id = "" ><img src="' . $img1 . '" alt="Edit" class="img-responsive" onmouseover=this.src="' . $img1_active . '" onmouseout=this.src="' . $img1 . '"></a>
+					<a href="#!/role-pkg/role/view/' . $roles->id . '" id = "" ><img src="' . $img2 . '" alt="View" class="img-responsive" onmouseover=this.src="' . $img2_active . '" onmouseout=this.src="' . $img2 . '"></a>
 					<a href="javascript:;"  data-toggle="modal" data-target="#role-delete-modal" onclick="angular.element(this).scope().deleteRoleconfirm(' . $roles->id . ')" title="Delete"><img src="' . $img_delete . '" alt="Delete" class="img-responsive delete" onmouseover=this.src="' . $img_delete_active . '" onmouseout=this.src="' . $img_delete . '"></a>';
 				} else {
 					$output .= '<a href="#!/role-pkg/role/view/' . $roles->id . '" id = "" ><img src="' . $img2 . '" alt="Account Management" class="img-responsive" onmouseover=this.src="' . $img2_active . '" onmouseout=this.src="' . $img2 . '"></a>';
