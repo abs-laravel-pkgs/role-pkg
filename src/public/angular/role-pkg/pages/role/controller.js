@@ -66,13 +66,13 @@ app.component('roleList', {
                 { data: 'status', name: 'status', searchable: false },
             ],
             "infoCallback": function(settings, start, end, max, total, pre) {
-                $('#table_info').html(total+ '/'+max)
+                $('#table_info').html(total + '/' + max)
             },
             rowCallback: function(row, data) {
                 $(row).addClass('highlight-row');
             },
-            initComplete: function () {
-              $('.search label input').focus();
+            initComplete: function() {
+                $('.search label input').focus();
             },
         });
         $('.dataTables_length select').select2();
@@ -121,7 +121,7 @@ app.component('roleList', {
 app.component('roleForm', {
     templateUrl: role_form_template_url,
     controller: function($http, $location, HelperService, $scope, $routeParams, $rootScope) {
-        get_form_data_url = typeof($routeParams.id) == 'undefined' ? role_get_form_data_url : role_get_form_data_url + '/' + $routeParams.id;
+        get_form_data_url = typeof($routeParams.id) == 'undefined' ? role_get_form_data_url : role_get_form_data_url + $routeParams.id;
         var self = this;
         self.hasPermission = HelperService.hasPermission;
         self.angular_routes = angular_routes;
@@ -643,7 +643,6 @@ app.component('roleView', {
 
         // });
 
-        $scope.selectChilds = function(id) {
-        }
+        $scope.selectChilds = function(id) {}
     }
 });
