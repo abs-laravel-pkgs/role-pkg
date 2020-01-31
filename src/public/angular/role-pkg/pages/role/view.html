@@ -55,8 +55,8 @@
                                         <!--  <h5 class="title">Permissions</h5> -->
                                         <div class="permission_errors"></div>
                                     </div><!-- Section Title -->
-                                    <ul class="roll-box-list">
-                                        <li class="checkbox_parent checkbox1 roll-box" ng-repeat="(parent_key,parent_permission) in $ctrl.parent_permission_group_list">
+                                    <ul compile="$ctrl.parent_group_list" class="roll-box-list n_roles">
+                                        <!-- <li class="checkbox_parent checkbox1 roll-box" ng-repeat="(parent_key,parent_permission) in $ctrl.parent_permission_group_list">
                                             <div class="checkbox">
                                                 <input type="checkbox" name="permission_ids[]" id="perm_{{parent_permission.id}}" value="{{parent_permission.id}}" ng-checked="valueChecked(parent_permission.id)!=-1" class="parent_check parent_checkbox pc_{{parent_permission.id}}" data-ids="{{parent_permission.id}}" disabled>
                                                 <label for="perm_{{parent_permission.id}}">
@@ -112,7 +112,7 @@
                                                     </ul>
                                                 </li>
                                             </ul>
-                                        </li>
+                                        </li> -->
                                     </ul>
                                 </div><!-- Column -->
                             </div><!-- Row -->

@@ -49,7 +49,29 @@ class Role extends EntrustRole {
 	public function applicableRoles() {
 		return $this->belongsToMany('App\Role', 'ts_type_roles', 'role_id', 'type_id');
 	}
-
+	public static function checkRoleRecursively($parent_id = NULL, $action) {
+		$permission_data_list = '';
+		//dd($action);
+		if ($action == 'View') {
+			$check_disabled = "disabled";
+		} else {
+			$check_disabled = "";
+		}
+		// if ($parent_id == NULL) {
+		// 	$parent_permission_group_list = Permission::select('parent_id', 'id', 'display_name')->where('parent_id', $parent_id)->where('id', 199)->get();
+		// } else {
+		$parent_permission_group_list = Permission::select('parent_id', 'id', 'display_name')->where('parent_id', $parent_id)->get();
+		//}
+		foreach ($parent_permission_group_list as $key => $value) {
+			$child_data_list = Permission::where('parent_id', $value->id)->get();
+			$permission_data_list .= '<li class="checkbox_parent checkbox1 roll-box"><div class="checkbox"><input type="checkbox" name="permission_ids[]" id="perm_' . $value->id . '" value="' . $value->id . '" ng-checked="valueChecked(' . $value->id . ')!=-1" class="parent_check parent_checkbox pc_' . $value->id . '" data-ids="' . $value->id . '" ' . $check_disabled . '><label for="perm_' . $value->id . '"><span class="check"></span>' . $value->display_name . '</label>';
+			if (count($child_data_list) > 0) {
+				$permission_data_list .= '<div class="down-btn-arrow"><span class="anchor-sub btn btn-dropdown"><i class="icon ion-ios-arrow-down" aria-hidden="true" ng-click="showChild(' . $value->id . ')"></i></span></div>';
+			}
+			$permission_data_list .= '</div><ul class="pcc_' . $value->id . ' permission-set-ul roll-box-sub-list" ng-show="show_child_' . $value->id . '">' . self::checkRoleRecursively($value->id, $action) . '</ul></li>';
+		}
+		return $permission_data_list;
+	}
 	public static function createFromCollection($records) {
 		foreach ($records as $key => $record_data) {
 			try {

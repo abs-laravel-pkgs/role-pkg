@@ -19,6 +19,19 @@ app.config(['$routeProvider', function($routeProvider) {
         title: 'View Role',
     });
 }]);
+/*Compile*/
+app.directive('compile', ['$compile', function ($compile) {
+  return function(scope, element, attrs) {
+      scope.$watch(
+        function(scope) {
+          return scope.$eval(attrs.compile);
+        },
+        function(value) {
+          element.html(value);
+          $compile(element.contents())(scope);
+        }
+      )};
+}]);
 
 app.component('roleList', {
     templateUrl: role_list_template_url,
@@ -126,7 +139,7 @@ app.component('roleForm', {
                 return;
             }
             // console.log(response.data.selected_permissions);
-            // console.log(response.data);
+            console.log(response.data);
             self.status = response.data.status;
             self.role = response.data.role;
             self.action = response.data.action;
@@ -138,9 +151,11 @@ app.component('roleForm', {
             self.permission_list = response.data.permission_list;
             self.permission_sub_list = response.data.permission_sub_list;
             self.permission_sub_child_list = response.data.permission_sub_child_list;
+            self.parent_group_list = response.data.parent_group_list;
             // console.log(self.permission_sub_child_list);
             $rootScope.loading = false;
         });
+
         $("input:text:visible:first").focus();
         var form_id = '#form';
         var v = jQuery(form_id).validate({
@@ -226,7 +241,7 @@ app.component('roleForm', {
                 $($scope["show_grand_child_" + id].target).removeClass('fa-minus');
             }
         }
-        $scope.showChild = function(id) {
+        $scope.showChild = function(id) { //alert(id);
             $scope["show_child_" + id] = $scope["show_child_" + id] ? false : true;
 
         }
@@ -235,179 +250,179 @@ app.component('roleForm', {
             var value = selected_permissions.indexOf(id);
             return value;
         }
-
-
-        $(document).on("click", ".parent_checkbox", function() {
-            var id = $(this).data('ids');
-            var c = $(this).attr('checked');
-            //parent_id = id.split('_');
-            if ($(this).prop("checked") == true) {
-                //$('.sub_childs_' + parent_id[1]).prop('checked', 'checked');
-                //$('.sub_childs_test_' + parent_id[1]).prop('checked', 'checked');
-                $('.sub_childs_' + id).prop('checked', 'checked');
-                $('.sub_childs_test_' + id).prop('checked', 'checked');
-
-            } else if ($(this).prop("checked") == false) {
-                //$('.sub_childs_' + parent_id[1]).prop('checked', '');
-                //$('.sub_childs_test_' + parent_id[1]).prop('checked', '');
-                $('.sub_childs_' + id).prop('checked', '');
-                $('.sub_childs_test_' + id).prop('checked', '');
-
-            }
-        });
-
-        $(document).on("click", ".sub_parent", function() {
-            var id = $(this).data('ids');
-            var c = $(this).attr('checked');
-            if ($(this).prop("checked") == true) {
-                $('.sub_parent_childs_' + id).prop('checked', 'checked');
-                $('.sub_parent_childs2_' + id).prop('checked', 'checked');
-            } else if ($(this).prop("checked") == false) {
-                $('.sub_parent_childs_' + id).prop('checked', '');
-                $('.sub_parent_childs2_' + id).prop('checked', '');
-            }
-        });
-
-
-        $(document).on("click", ".check_its_child", function() {
-            var id = $(this).data('item');
-            var c = $(this).attr('checked');
-            if ($(this).prop("checked") == true) {
-                $('.childs2_' + id).prop('checked', 'checked');
-            } else if ($(this).prop("checked") == false) {
-                $('.childs2_' + id).prop('checked', '');
-            }
-        });
-
-        $(document).on("change", ".permission_check_class", function() {
-            var parent_count = 0;
-            $(this).parents('li').find('.permission_check_class').each(function() {
-                if ($(this).is(":checked")) {
-                    // console.log(' == parent count checked ===');
-                    parent_count = 1;
-                }
+        $(document).on("change", ".parent_checkbox", function() {
+            // var id = $(this).data('ids');
+            $(this).parent().next().find('input[type=checkbox]').prop('checked',this.checked);
+            // var uncheck_child = $(this).parent().parent().siblings().find('input[type=checkbox]:checked').length;
+            var children_uncheck = $(this).parentsUntil('ul.n_roles').siblings('li').find(':checked').length;
+            // go up the hierarchy - and check/uncheck depending on number of children checked/unchecked
+            $(this).parents('ul').prev('div').find('input[type=checkbox]').prop('checked',function(){
+                if ($(this).prop('checked') == true && children_uncheck == 0) {
+                        return $(this).parent().prev().find(':checked').length;
+                } 
+                return $(this).parent().next().find(':checked').length;
             });
-
-            if (parent_count == 0) {
-                // console.log(' == parent count 0 ===');
-                $(this).parents('li').find('.parent_check').prop('checked', false);
-            } else {
-                $(this).parents('li').find('.parent_check').prop('checked', true);
-            }
+            // if ($(this).prop("checked") == true) {
+            //     // $('.sub_childs_' + id).prop('checked', 'checked');
+            //     // $('.sub_childs_test_' + id).prop('checked', 'checked');
+            // } else if ($(this).prop("checked") == false) { //alert('uncheck');
+            //     // $('.sub_childs_' + id).prop('checked', '');
+            //     // $('.sub_childs_test_' + id).prop('checked', '');
+            // }
         });
 
-        $(document).on("change", ".sub_child", function() {
-
-            ids = $(this).data("ids");
-            id = ids.split("_");
-            var sub_parent_count = 0;
-            if ($(this).is(":checked")) {
-
-                $('.pc_' + id[1]).prop('checked', true);
-                $('.sc_' + id[0]).prop('checked', true);
-                $('.childs2_' + id[2]).prop('checked', true);
-            } else {
-                var countCheckedCheckboxes = 0;
-                $(this).parents('li').find('.sub_child').each(function() {
-                    countCheckedCheckboxes = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
-                });
-
-                if (countCheckedCheckboxes == 0) {
-
-                    var subCheckedCheckboxes = 0;
-                    $('.sc_' + id[0]).prop('checked', false);
-                    $('.childs2_' + id[2]).prop('checked', false);
-                    $(this).parents('li').find('.permission_check_class').each(function() {
-
-                        subCheckedCheckboxes = $(this).parents('li').find('.sub_test_' + id[1]).filter(':checked').length;
-                        subCheckedcount = $(this).parents('li').find('.sc_' + id[0]).filter(':checked').length;
-
-                    });
+        // $(document).on("click", ".sub_parent", function() {
+        //     var id = $(this).data('ids');
+        //     var c = $(this).attr('checked');
+        //     if ($(this).prop("checked") == true) {
+        //         $('.sub_parent_childs_' + id).prop('checked', 'checked');
+        //         $('.sub_parent_childs2_' + id).prop('checked', 'checked');
+        //     } else if ($(this).prop("checked") == false) {
+        //         $('.sub_parent_childs_' + id).prop('checked', '');
+        //         $('.sub_parent_childs2_' + id).prop('checked', '');
+        //     }
+        // });
 
 
-                }
+        // $(document).on("click", ".check_its_child", function() {
+        //     var id = $(this).data('item');
+        //     var c = $(this).attr('checked');
+        //     if ($(this).prop("checked") == true) {
+        //         $('.childs2_' + id).prop('checked', 'checked');
+        //     } else if ($(this).prop("checked") == false) {
+        //         $('.childs2_' + id).prop('checked', '');
+        //     }
+        // });
 
-            }
+        // $(document).on("change", ".permission_check_class", function() {
+        //     var parent_count = 0;
+        //     $(this).parents('li').find('.permission_check_class').each(function() {
+        //         if ($(this).is(":checked")) {
+        //             // console.log(' == parent count checked ===');
+        //             parent_count = 1;
+        //         }
+        //     });
 
+        //     if (parent_count == 0) {
+        //         // console.log(' == parent count 0 ===');
+        //         $(this).parents('li').find('.parent_check').prop('checked', false);
+        //     } else {
+        //         $(this).parents('li').find('.parent_check').prop('checked', true);
+        //     }
+        // });
 
-        });
+        // $(document).on("change", ".sub_child", function() {
 
-        $(document).on("change", ".super_sub_child", function() {
+        //     ids = $(this).data("ids");
+        //     id = ids.split("_");
+        //     var sub_parent_count = 0;
+        //     if ($(this).is(":checked")) {
 
-            ids = $(this).data("ids");
-            id = ids.split("_");
-            // console.log(ids);
-            if ($(this).is(":checked")) {
-                $('.pc_' + id[1]).prop('checked', true);
-                $('.sc_' + id[0]).prop('checked', true);
-                $('.child_' + id[2]).prop('checked', true);
-            } else {
-                var countCheckedCheckboxes1 = 0;
-                $(this).parents('li').find('.super_sub_child').each(function() {
-                    countCheckedCheckboxes1 = $(this).parents('li').find('.childs2_' + id[2]).filter(':checked').length;
-                });
-                if (countCheckedCheckboxes1 == 0) {
-                    $('.child_' + id[2]).prop('checked', false);
-                }
+        //         $('.pc_' + id[1]).prop('checked', true);
+        //         $('.sc_' + id[0]).prop('checked', true);
+        //         $('.childs2_' + id[2]).prop('checked', true);
+        //     } else {
+        //         var countCheckedCheckboxes = 0;
+        //         $(this).parents('li').find('.sub_child').each(function() {
+        //             countCheckedCheckboxes = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
+        //         });
 
-                var countCheckedCheckboxes2 = 0;
-                $(this).parents('li').find('.check_its_child').each(function() {
-                    countCheckedCheckboxes2 = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
-                });
-                if (countCheckedCheckboxes2 == 0) {
-                    $('.sc_' + id[0]).prop('checked', false);
-                }
+        //         if (countCheckedCheckboxes == 0) {
 
-                var countCheckedCheckboxes3 = 0;
+        //             var subCheckedCheckboxes = 0;
+        //             $('.sc_' + id[0]).prop('checked', false);
+        //             $('.childs2_' + id[2]).prop('checked', false);
+        //             $(this).parents('li').find('.permission_check_class').each(function() {
 
+        //                 subCheckedCheckboxes = $(this).parents('li').find('.sub_test_' + id[1]).filter(':checked').length;
+        //                 subCheckedcount = $(this).parents('li').find('.sc_' + id[0]).filter(':checked').length;
 
-
-                //  $(this).parents('li').find('.permission_check_class').each(function() {
-                //      countCheckedCheckboxes3 = $(this).parents('li').find('.sc_' + id[0]).filter(':checked').length;
-                // });
-                //  if(countCheckedCheckboxes3 == 0)
-                //  {
-                //     $('.pc_' + id[1]).prop('checked', false);
-                //  }
-
-
-                // console.log(countCheckedCheckboxes2);
-
-
-                // var countCheckedCheckboxes1 = 0;
-                // $(this).parents('li').find('.super_sub_child').each(function() {
-                //      countCheckedCheckboxes1 = $(this).parents('li').find('.childs2_' + id[2]).filter(':checked').length;
-                // });
-
-                // if (countCheckedCheckboxes1 == 0) {
-
-                //     var subCheckedCheckboxes1 = 0;
-
-                //     $('.child_' + id[2]).prop('checked', false);
-
-                //     $(this).parents('li').find('.check_its_child').each(function() {
+        //             });
 
 
-                //     subCheckedCheckboxes1 = $(this).parents('li').find('.sub_childs_test_' + id[1]).filter(':checked').length;
-                //     // if(subCheckedCheckboxes1){
-                //     //     subCheckedCheckboxes1 = subCheckedCheckboxes1;
-                //     // }else{
-                //     //     subCheckedCheckboxes1 =1;
-                //     // }
-                // });
-                //      console.log("super_sub"+subCheckedCheckboxes1);
-                //   // console.log("super_sub"+subCheckedCheckboxes1);
-                //     if(subCheckedCheckboxes1 == 0){
-                //         // alert("suppp");
+        //         }
 
-                //         // $('.pc_' + id[1]).prop('checked', false);
-                //         $('.sc_' + id[0]).prop('checked', false);
-                //     }
+        //     }
 
-                // } 
-            }
 
-        });
+        // });
+
+        // $(document).on("change", ".super_sub_child", function() {
+
+        //     ids = $(this).data("ids");
+        //     id = ids.split("_");
+        //     // console.log(ids);
+        //     if ($(this).is(":checked")) {
+        //         $('.pc_' + id[1]).prop('checked', true);
+        //         $('.sc_' + id[0]).prop('checked', true);
+        //         $('.child_' + id[2]).prop('checked', true);
+        //     } else {
+        //         var countCheckedCheckboxes1 = 0;
+        //         $(this).parents('li').find('.super_sub_child').each(function() {
+        //             countCheckedCheckboxes1 = $(this).parents('li').find('.childs2_' + id[2]).filter(':checked').length;
+        //         });
+        //         if (countCheckedCheckboxes1 == 0) {
+        //             $('.child_' + id[2]).prop('checked', false);
+        //         }
+
+        //         var countCheckedCheckboxes2 = 0;
+        //         $(this).parents('li').find('.check_its_child').each(function() {
+        //             countCheckedCheckboxes2 = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
+        //         });
+        //         if (countCheckedCheckboxes2 == 0) {
+        //             $('.sc_' + id[0]).prop('checked', false);
+        //         }
+
+        //         var countCheckedCheckboxes3 = 0;
+
+
+
+        //         //  $(this).parents('li').find('.permission_check_class').each(function() {
+        //         //      countCheckedCheckboxes3 = $(this).parents('li').find('.sc_' + id[0]).filter(':checked').length;
+        //         // });
+        //         //  if(countCheckedCheckboxes3 == 0)
+        //         //  {
+        //         //     $('.pc_' + id[1]).prop('checked', false);
+        //         //  }
+
+
+        //         // console.log(countCheckedCheckboxes2);
+
+
+        //         // var countCheckedCheckboxes1 = 0;
+        //         // $(this).parents('li').find('.super_sub_child').each(function() {
+        //         //      countCheckedCheckboxes1 = $(this).parents('li').find('.childs2_' + id[2]).filter(':checked').length;
+        //         // });
+
+        //         // if (countCheckedCheckboxes1 == 0) {
+
+        //         //     var subCheckedCheckboxes1 = 0;
+
+        //         //     $('.child_' + id[2]).prop('checked', false);
+
+        //         //     $(this).parents('li').find('.check_its_child').each(function() {
+
+
+        //         //     subCheckedCheckboxes1 = $(this).parents('li').find('.sub_childs_test_' + id[1]).filter(':checked').length;
+        //         //     // if(subCheckedCheckboxes1){
+        //         //     //     subCheckedCheckboxes1 = subCheckedCheckboxes1;
+        //         //     // }else{
+        //         //     //     subCheckedCheckboxes1 =1;
+        //         //     // }
+        //         // });
+        //         //      console.log("super_sub"+subCheckedCheckboxes1);
+        //         //   // console.log("super_sub"+subCheckedCheckboxes1);
+        //         //     if(subCheckedCheckboxes1 == 0){
+        //         //         // alert("suppp");
+
+        //         //         // $('.pc_' + id[1]).prop('checked', false);
+        //         //         $('.sc_' + id[0]).prop('checked', false);
+        //         //     }
+
+        //         // } 
+        //     }
+
+        // });
 
         $scope.selectChilds = function(id) {
 
@@ -435,7 +450,7 @@ app.component('roleView', {
                     layout: 'topRight',
                     text: response.data.error,
                 }).show();
-                $location.path('/settings/roles/list')
+                $location.path('/role-pkg/role/list')
                 $scope.$apply()
                 return;
             }
@@ -451,6 +466,7 @@ app.component('roleView', {
             self.permission_list = response.data.permission_list;
             self.permission_sub_list = response.data.permission_sub_list;
             self.permission_sub_child_list = response.data.permission_sub_child_list;
+            self.parent_group_list = response.data.parent_group_list;
             // console.log(self.permission_sub_child_list);
             if (self.role.deleted_at == null) {
                 self.status = "Active";
@@ -496,123 +512,136 @@ app.component('roleView', {
             return value;
         }
 
-
-        $(document).on("click", ".parent_checkbox", function() {
-            var id = $(this).data('ids');
-            var c = $(this).attr('checked');
-            //parent_id = id.split('_');
-            if ($(this).prop("checked") == true) {
-                $('.sub_childs_' + id).prop('checked', 'checked');
-                $('.sub_childs_test_' + id).prop('checked', 'checked');
-
-            } else if ($(this).prop("checked") == false) {
-                $('.sub_childs_' + id).prop('checked', '');
-                $('.sub_childs_test_' + id).prop('checked', '');
-
-            }
-        });
-
-        $(document).on("click", ".sub_parent", function() {
-            var id = $(this).data('ids');
-            var c = $(this).attr('checked');
-            if ($(this).prop("checked") == true) {
-                $('.sub_parent_childs_' + id).prop('checked', 'checked');
-                $('.sub_parent_childs2_' + id).prop('checked', 'checked');
-            } else if ($(this).prop("checked") == false) {
-                $('.sub_parent_childs_' + id).prop('checked', '');
-                $('.sub_parent_childs2_' + id).prop('checked', '');
-            }
-        });
-
-
-        $(document).on("click", ".check_its_child", function() {
-            var id = $(this).data('item');
-            var c = $(this).attr('checked');
-            if ($(this).prop("checked") == true) {
-                $('.childs2_' + id).prop('checked', 'checked');
-            } else if ($(this).prop("checked") == false) {
-                $('.childs2_' + id).prop('checked', '');
-            }
-        });
-
-        $(document).on("change", ".permission_check_class", function() {
-            var parent_count = 0;
-            $(this).parents('li').find('.permission_check_class').each(function() {
-                if ($(this).is(":checked")) {
-                    // console.log(' == parent count checked ===');
-                    parent_count = 1;
-                }
+        $(document).on("change", ".parent_checkbox", function() {
+            // var id = $(this).data('ids');
+            $(this).parent().next().find('input[type=checkbox]').prop('checked',this.checked);
+            // var uncheck_child = $(this).parent().parent().siblings().find('input[type=checkbox]:checked').length;
+            var children_uncheck = $(this).parentsUntil('ul.n_roles').siblings('li').find(':checked').length;
+            // go up the hierarchy - and check/uncheck depending on number of children checked/unchecked
+            $(this).parents('ul').prev('div').find('input[type=checkbox]').prop('checked',function(){
+                if ($(this).prop('checked') == true && children_uncheck == 0) {
+                        return $(this).parent().prev().find(':checked').length;
+                } 
+                return $(this).parent().next().find(':checked').length;
             });
-
-            if (parent_count == 0) {
-                // console.log(' == parent count 0 ===');
-                $(this).parents('li').find('.parent_check').prop('checked', false);
-            } else {
-                $(this).parents('li').find('.parent_check').prop('checked', true);
-            }
         });
 
-        $(document).on("change", ".sub_child", function() {
+        // $(document).on("click", ".parent_checkbox", function() {
+        //     var id = $(this).data('ids');
+        //     var c = $(this).attr('checked');
+        //     //parent_id = id.split('_');
+        //     if ($(this).prop("checked") == true) {
+        //         $('.sub_childs_' + id).prop('checked', 'checked');
+        //         $('.sub_childs_test_' + id).prop('checked', 'checked');
 
-            ids = $(this).data("ids");
-            id = ids.split("_");
-            var sub_parent_count = 0;
-            if ($(this).is(":checked")) {
+        //     } else if ($(this).prop("checked") == false) {
+        //         $('.sub_childs_' + id).prop('checked', '');
+        //         $('.sub_childs_test_' + id).prop('checked', '');
 
-                $('.pc_' + id[1]).prop('checked', true);
-                $('.sc_' + id[0]).prop('checked', true);
-                $('.childs2_' + id[2]).prop('checked', true);
-            } else {
-                var countCheckedCheckboxes = 0;
-                $(this).parents('li').find('.sub_child').each(function() {
-                    countCheckedCheckboxes = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
-                });
+        //     }
+        // });
 
-                if (countCheckedCheckboxes == 0) {
+        // $(document).on("click", ".sub_parent", function() {
+        //     var id = $(this).data('ids');
+        //     var c = $(this).attr('checked');
+        //     if ($(this).prop("checked") == true) {
+        //         $('.sub_parent_childs_' + id).prop('checked', 'checked');
+        //         $('.sub_parent_childs2_' + id).prop('checked', 'checked');
+        //     } else if ($(this).prop("checked") == false) {
+        //         $('.sub_parent_childs_' + id).prop('checked', '');
+        //         $('.sub_parent_childs2_' + id).prop('checked', '');
+        //     }
+        // });
 
-                    var subCheckedCheckboxes = 0;
-                    $('.sc_' + id[0]).prop('checked', false);
-                    $('.childs2_' + id[2]).prop('checked', false);
-                    $(this).parents('li').find('.permission_check_class').each(function() {
 
-                        subCheckedCheckboxes = $(this).parents('li').find('.sub_test_' + id[1]).filter(':checked').length;
-                        subCheckedcount = $(this).parents('li').find('.sc_' + id[0]).filter(':checked').length;
+        // $(document).on("click", ".check_its_child", function() {
+        //     var id = $(this).data('item');
+        //     var c = $(this).attr('checked');
+        //     if ($(this).prop("checked") == true) {
+        //         $('.childs2_' + id).prop('checked', 'checked');
+        //     } else if ($(this).prop("checked") == false) {
+        //         $('.childs2_' + id).prop('checked', '');
+        //     }
+        // });
 
-                    });
-                }
-            }
-        });
+        // $(document).on("change", ".permission_check_class", function() {
+        //     var parent_count = 0;
+        //     $(this).parents('li').find('.permission_check_class').each(function() {
+        //         if ($(this).is(":checked")) {
+        //             // console.log(' == parent count checked ===');
+        //             parent_count = 1;
+        //         }
+        //     });
 
-        $(document).on("change", ".super_sub_child", function() {
+        //     if (parent_count == 0) {
+        //         // console.log(' == parent count 0 ===');
+        //         $(this).parents('li').find('.parent_check').prop('checked', false);
+        //     } else {
+        //         $(this).parents('li').find('.parent_check').prop('checked', true);
+        //     }
+        // });
 
-            ids = $(this).data("ids");
-            id = ids.split("_");
-            // console.log(ids);
-            if ($(this).is(":checked")) {
-                $('.pc_' + id[1]).prop('checked', true);
-                $('.sc_' + id[0]).prop('checked', true);
-                $('.child_' + id[2]).prop('checked', true);
-            } else {
-                var countCheckedCheckboxes1 = 0;
-                $(this).parents('li').find('.super_sub_child').each(function() {
-                    countCheckedCheckboxes1 = $(this).parents('li').find('.childs2_' + id[2]).filter(':checked').length;
-                });
-                if (countCheckedCheckboxes1 == 0) {
-                    $('.child_' + id[2]).prop('checked', false);
-                }
+        // $(document).on("change", ".sub_child", function() {
 
-                var countCheckedCheckboxes2 = 0;
-                $(this).parents('li').find('.check_its_child').each(function() {
-                    countCheckedCheckboxes2 = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
-                });
-                if (countCheckedCheckboxes2 == 0) {
-                    $('.sc_' + id[0]).prop('checked', false);
-                }
+        //     ids = $(this).data("ids");
+        //     id = ids.split("_");
+        //     var sub_parent_count = 0;
+        //     if ($(this).is(":checked")) {
 
-                var countCheckedCheckboxes3 = 0;
-            }
+        //         $('.pc_' + id[1]).prop('checked', true);
+        //         $('.sc_' + id[0]).prop('checked', true);
+        //         $('.childs2_' + id[2]).prop('checked', true);
+        //     } else {
+        //         var countCheckedCheckboxes = 0;
+        //         $(this).parents('li').find('.sub_child').each(function() {
+        //             countCheckedCheckboxes = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
+        //         });
 
-        });
+        //         if (countCheckedCheckboxes == 0) {
+
+        //             var subCheckedCheckboxes = 0;
+        //             $('.sc_' + id[0]).prop('checked', false);
+        //             $('.childs2_' + id[2]).prop('checked', false);
+        //             $(this).parents('li').find('.permission_check_class').each(function() {
+
+        //                 subCheckedCheckboxes = $(this).parents('li').find('.sub_test_' + id[1]).filter(':checked').length;
+        //                 subCheckedcount = $(this).parents('li').find('.sc_' + id[0]).filter(':checked').length;
+
+        //             });
+        //         }
+        //     }
+        // });
+
+        // $(document).on("change", ".super_sub_child", function() {
+
+        //     ids = $(this).data("ids");
+        //     id = ids.split("_");
+        //     // console.log(ids);
+        //     if ($(this).is(":checked")) {
+        //         $('.pc_' + id[1]).prop('checked', true);
+        //         $('.sc_' + id[0]).prop('checked', true);
+        //         $('.child_' + id[2]).prop('checked', true);
+        //     } else {
+        //         var countCheckedCheckboxes1 = 0;
+        //         $(this).parents('li').find('.super_sub_child').each(function() {
+        //             countCheckedCheckboxes1 = $(this).parents('li').find('.childs2_' + id[2]).filter(':checked').length;
+        //         });
+        //         if (countCheckedCheckboxes1 == 0) {
+        //             $('.child_' + id[2]).prop('checked', false);
+        //         }
+
+        //         var countCheckedCheckboxes2 = 0;
+        //         $(this).parents('li').find('.check_its_child').each(function() {
+        //             countCheckedCheckboxes2 = $(this).parents('li').find('.sub_parent_childs_' + id[0]).filter(':checked').length;
+        //         });
+        //         if (countCheckedCheckboxes2 == 0) {
+        //             $('.sc_' + id[0]).prop('checked', false);
+        //         }
+
+        //         var countCheckedCheckboxes3 = 0;
+        //     }
+
+        // });
 
         $scope.selectChilds = function(id) {
         }

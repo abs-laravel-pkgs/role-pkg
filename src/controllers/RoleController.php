@@ -3,7 +3,6 @@
 namespace Abs\RolePkg;
 use Abs\RolePkg\Role;
 use App\Http\Controllers\Controller;
-use App\Permission;
 use Auth;
 use DB;
 use Illuminate\Http\Request;
@@ -53,7 +52,7 @@ class RoleController extends Controller {
 		if (!$id) {
 			$data['role'] = new Role;
 			$this->data['status'] = 'Active';
-			$data['action'] = 'Add';
+			$data['action'] = $action = 'Add';
 			$data['selected_permissions'] = [];
 		} else {
 			$data['role'] = $role = Role::withTrashed()->where('id', $id)->first();
@@ -61,39 +60,41 @@ class RoleController extends Controller {
 				return response()->json(['success' => false, 'error' => 'Roles Not Found']);
 			}
 			$data['selected_permissions'] = $role->permissions()->pluck('id')->toArray();
-			$data['action'] = 'Edit';
+			$data['action'] = $action = 'Edit';
 			if ($role->deleted_at == NULL) {
 				$this->data['status'] = 'Active';
 			} else {
 				$this->data['status'] = 'Inactive';
 			}
 		}
-		$data['parent_permission_group_list'] = Permission::select('parent_id', 'id', 'display_name')->whereNull('parent_id')->get();
-		foreach ($data['parent_permission_group_list'] as $key => $value) {
-			$permission_group_id = $data['parent_permission_group_list'][$key]['id'];
-			$permission_list[$permission_group_id] = Permission::where('parent_id', $permission_group_id)->get();
+		$data['parent_group_list'] = Role::checkRoleRecursively(NULL, $action);
+		// $data['parent_permission_group_list'] = Permission::select('parent_id', 'id', 'display_name')->whereNull('parent_id')->get();
 
-			foreach ($permission_list[$permission_group_id] as $permission_list_key => $permission_list_value) {
-				$permission_group_sub_id = $permission_list_value['id'];
-				$permission_sub_list[$permission_group_sub_id] = Permission::where('parent_id', $permission_group_sub_id)
-				//->where('display_order', '!=', 0)
-					->orderBy('display_order', 'ASC')->get();
+		// foreach ($data['parent_permission_group_list'] as $key => $value) {
+		// 	$permission_group_id = $data['parent_permission_group_list'][$key]['id'];
+		// 	$permission_list[$permission_group_id] = Permission::where('parent_id', $permission_group_id)->get();
 
-				foreach ($permission_sub_list[$permission_group_sub_id] as $key => $sub_value) {
-					$permission_group_sub_child_id = $sub_value['id'];
-					$permission_sub_child_list[$permission_group_sub_child_id] = Permission::where('parent_id', $permission_group_sub_child_id)
+		// 	foreach ($permission_list[$permission_group_id] as $permission_list_key => $permission_list_value) {
+		// 		$permission_group_sub_id = $permission_list_value['id'];
+		// 		$permission_sub_list[$permission_group_sub_id] = Permission::where('parent_id', $permission_group_sub_id)
+		// 		//->where('display_order', '!=', 0)
+		// 			->orderBy('display_order', 'ASC')->get();
 
-						->orderBy('display_order', 'ASC')->get();
+		// 		foreach ($permission_sub_list[$permission_group_sub_id] as $key => $sub_value) {
+		// 			$permission_group_sub_child_id = $sub_value['id'];
+		// 			$permission_sub_child_list[$permission_group_sub_child_id] = Permission::where('parent_id', $permission_group_sub_child_id)
 
-				}
+		// 				->orderBy('display_order', 'ASC')->get();
 
-			}
+		// 		}
 
-		}
+		// 	}
 
-		$data['permission_list'] = $permission_list;
-		$data['permission_sub_list'] = $permission_sub_list;
-		$data['permission_sub_child_list'] = $permission_sub_child_list;
+		// }
+
+		// $data['permission_list'] = $permission_list;
+		// $data['permission_sub_list'] = $permission_sub_list;
+		// $data['permission_sub_child_list'] = $permission_sub_child_list;
 		$data['success'] = true;
 		return response()->json($data);
 	}
@@ -175,39 +176,40 @@ class RoleController extends Controller {
 			return response()->json(['success' => false, 'error' => 'Roles Not Found']);
 		}
 		$data['selected_permissions'] = $role->permissions()->pluck('id')->toArray();
-		$data['action'] = 'Edit';
+		//$data['action'] = 'Edit';
 		if ($role->deleted_at == NULL) {
 			$this->data['status'] = 'Active';
 		} else {
 			$this->data['status'] = 'Inactive';
 		}
-		$data['parent_permission_group_list'] = Permission::select('parent_id', 'id', 'display_name')->whereNull('parent_id')->get();
-		foreach ($data['parent_permission_group_list'] as $key => $value) {
-			$permission_group_id = $data['parent_permission_group_list'][$key]['id'];
-			$permission_list[$permission_group_id] = Permission::where('parent_id', $permission_group_id)->get();
+		$data['action'] = $action = 'View';
+		$data['parent_group_list'] = Role::checkRoleRecursively(NULL, $action);
+		// $data['parent_permission_group_list'] = Permission::select('parent_id', 'id', 'display_name')->whereNull('parent_id')->get();
+		// foreach ($data['parent_permission_group_list'] as $key => $value) {
+		// 	$permission_group_id = $data['parent_permission_group_list'][$key]['id'];
+		// 	$permission_list[$permission_group_id] = Permission::where('parent_id', $permission_group_id)->get();
 
-			foreach ($permission_list[$permission_group_id] as $permission_list_key => $permission_list_value) {
-				$permission_group_sub_id = $permission_list_value['id'];
-				$permission_sub_list[$permission_group_sub_id] = Permission::where('parent_id', $permission_group_sub_id)
-				//->where('display_order', '!=', 0)
-					->orderBy('display_order', 'ASC')->get();
+		// 	foreach ($permission_list[$permission_group_id] as $permission_list_key => $permission_list_value) {
+		// 		$permission_group_sub_id = $permission_list_value['id'];
+		// 		$permission_sub_list[$permission_group_sub_id] = Permission::where('parent_id', $permission_group_sub_id)
+		// 		//->where('display_order', '!=', 0)
+		// 			->orderBy('display_order', 'ASC')->get();
 
-				foreach ($permission_sub_list[$permission_group_sub_id] as $key => $sub_value) {
-					$permission_group_sub_child_id = $sub_value['id'];
-					$permission_sub_child_list[$permission_group_sub_child_id] = Permission::where('parent_id', $permission_group_sub_child_id)
+		// 		foreach ($permission_sub_list[$permission_group_sub_id] as $key => $sub_value) {
+		// 			$permission_group_sub_child_id = $sub_value['id'];
+		// 			$permission_sub_child_list[$permission_group_sub_child_id] = Permission::where('parent_id', $permission_group_sub_child_id)
 
-						->orderBy('display_order', 'ASC')->get();
+		// 				->orderBy('display_order', 'ASC')->get();
 
-				}
+		// 		}
 
-			}
+		// 	}
 
-		}
+		// }
 
-		$data['permission_list'] = $permission_list;
-		$data['permission_sub_list'] = $permission_sub_list;
-		$data['permission_sub_child_list'] = $permission_sub_child_list;
-		$data['action'] = 'View';
+		// $data['permission_list'] = $permission_list;
+		// $data['permission_sub_list'] = $permission_sub_list;
+		// $data['permission_sub_child_list'] = $permission_sub_child_list;
 		$data['success'] = true;
 		return response()->json($data);
 	}
