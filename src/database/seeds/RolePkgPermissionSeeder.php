@@ -4,7 +4,7 @@ namespace Abs\RolePkg\Database\Seeds;
 use App\Permission;
 use Illuminate\Database\Seeder;
 
-class RolePermissionSeeder extends Seeder {
+class RolePkgPermissionSeeder extends Seeder {
 	/**
 	 * Run the database seeds.
 	 *
