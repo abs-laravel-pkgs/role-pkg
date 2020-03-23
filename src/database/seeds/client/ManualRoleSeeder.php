@@ -9,6 +9,6 @@ class ManualRoleSeeder extends Seeder {
 	 * @return void
 	 */
 	public function run() {
-		$this->call(Abs\ManualRolePkg\Database\Seeds\ManualRolePkgSeeder::class);
+		$this->call(Abs\RolePkg\Database\Seeds\ManualRolePkgSeeder::class);
 	}
 }
