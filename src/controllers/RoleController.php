@@ -13,7 +13,7 @@ use Yajra\Datatables\Datatables;
 class RoleController extends Controller {
 
 	public function __construct() {
-		$this->data['theme'] = config('custom.admin_theme');
+		$this->data['theme'] = config('custom.theme');
 	}
 
 	public function getRolesList(Request $request) {
@@ -25,7 +25,9 @@ class RoleController extends Controller {
 			DB::raw('IF(roles.description IS NULL,"N/A",roles.description) as description'),
 			'roles.company_id',
 		])
-			->orderBy('roles.display_order', 'ASC');
+			->orderBy('roles.display_order', 'ASC')
+			//->get()
+			;
 		return Datatables::of($roles)
 			->addColumn('action', function ($roles) {
 
@@ -100,6 +102,10 @@ class RoleController extends Controller {
 		// $data['permission_list'] = $permission_list;
 		// $data['permission_sub_list'] = $permission_sub_list;
 		// $data['permission_sub_child_list'] = $permission_sub_child_list;
+		// echo '<pre>';
+		// print_r($data['parent_group_list']);
+		// echo '</pre>';
+		// dd($data);
 		$data['success'] = true;
 		return response()->json($data);
 	}
@@ -141,15 +147,16 @@ class RoleController extends Controller {
 			if ($request->status == '1') {
 
 				$roles->deleted_at = NULL;
-				$roles->deleted_by = NULL;
+				$roles->deleted_by_id = NULL;
 			} else {
 				$roles->deleted_at = date('Y-m-d H:i:s');
-				$roles->deleted_by = Auth::user()->id;
+				$roles->deleted_by_id = Auth::user()->id;
 			}
 			// $role_name = ucfirst(str_replace(' ', '_', strtolower($request->display_name)));
 			// dd($role_name);
 			// $roles->name = $role_name;
-			$roles->created_by = Auth::user()->id;
+			$roles->created_by_id = Auth::user()->id;
+			$roles->is_hidden =0;
 			$roles->fill($request->all());
 			$roles->display_name = $request->display_name;
 			$roles->name = $request->display_name;

@@ -29,5 +29,7 @@
     var role_delete_data_url = "{{url('role-pkg/role/delete/')}}";
     var role_view_template_url = "{{URL::asset($role_pkg_prefix.'/public/angular/role-pkg/pages/role/view.html')}}";
     var role_view_data_url = "{{url('role-pkg/role/view/')}}";
+    var image_scr2 = "{{URL::asset('public/themes/".+$theme+."/img/content/arrow.svg')}}";
+    var image_scr3 = "{{URL::asset('public/themes/".+$theme+."/img/content/arrow.svg')}}";
 </script>
 <script type="text/javascript" src="{{URL::asset($role_pkg_prefix.'/public/angular/role-pkg/pages/role/controller.js?v=2')}}"></script>

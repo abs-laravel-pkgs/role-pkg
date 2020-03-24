@@ -59,13 +59,14 @@ app.component('roleList', {
         $('.page-header-content .display-inline-block .data-table-title').html('Roles <span class="badge badge-secondary" id="table_info">0</span>');
         $('.page-header-content .search.display-inline-block .add_close_button').html('<button type="button" class="btn btn-img btn-add-close"><img src="' + image_scr2 + '" class="img-responsive"></button>');
         $('.page-header-content .refresh.display-inline-block').html('<button type="button" class="btn btn-refresh"><img src="' + image_scr3 + '" class="img-responsive"></button>');
-        // $('.add_new_button').html(
-        //     '<a href="#!/role-pkg/role/add" type="button" class="btn btn-secondary" dusk="add-btn">' +
-        //     'Add Role' +
-        //     '</a>'
-        // );
-        var addnew_block = $('#add_new_wrap').html();
-        $('.page-header-content .alignment-right .add_new_button').html(addnew_block);
+        $('.add_new_button').html(
+            '<a href="#!/role-pkg/role/add" type="button" class="btn btn-secondary" dusk="add-btn">' +
+            'Add Role' +
+            '</a>'
+        );
+
+        //var addnew_block = $('#add_new_wrap').html();
+        //$('.page-header-content .alignment-right .add_new_button').html(addnew_block);
 
         $('.btn-add-close').on("click", function() {
             $('#list_table').DataTable().search('').draw();
@@ -101,7 +102,7 @@ app.component('roleList', {
 app.component('roleForm', {
     templateUrl: role_form_template_url,
     controller: function($http, $location, HelperService, $scope, $routeParams, $rootScope) {
-        get_form_data_url = typeof($routeParams.id) == 'undefined' ? role_get_form_data_url : role_get_form_data_url + $routeParams.id;
+        get_form_data_url = typeof($routeParams.id) == 'undefined' ? role_get_form_data_url : role_get_form_data_url + '/' + $routeParams.id;
         var self = this;
         self.hasPermission = HelperService.hasPermission;
         self.angular_routes = angular_routes;
@@ -132,7 +133,7 @@ app.component('roleForm', {
             self.permission_sub_list = response.data.permission_sub_list;
             self.permission_sub_child_list = response.data.permission_sub_child_list;
             self.parent_group_list = response.data.parent_group_list;
-            // console.log(self.permission_sub_child_list);
+            console.log(self.parent_group_list);
             $rootScope.loading = false;
         });
 
@@ -174,7 +175,8 @@ app.component('roleForm', {
                         contentType: false,
                     })
                     .done(function(res) {
-                        // console.log(res.success);
+                        // alert();
+                        console.log(res.success);
                         if (!res.success) {
                             $('#submit').button('reset');
                             var errors = '';
@@ -221,12 +223,14 @@ app.component('roleForm', {
                 $($scope["show_grand_child_" + id].target).removeClass('fa-minus');
             }
         }
-        $scope.showChild = function(id) { //alert(id);
+        $scope.showChild = function(id) {
+            //alert(id);
             $scope["show_child_" + id] = $scope["show_child_" + id] ? false : true;
 
         }
 
         $scope.valueChecked = function(id) {
+            //alert(id);
             var value = selected_permissions.indexOf(id);
             return value;
         }
