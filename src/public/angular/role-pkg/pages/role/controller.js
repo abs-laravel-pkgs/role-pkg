@@ -1,36 +1,16 @@
-app.config(['$routeProvider', function($routeProvider) {
-
-    $routeProvider.
-    //ROLES
-    when('/role-pkg/role/list', {
-        template: '<role-list></role-list>',
-        title: 'Roles',
-    }).
-    when('/role-pkg/role/add', {
-        template: '<role-form></role-form>',
-        title: 'Add Role',
-    }).
-    when('/role-pkg/role/edit/:id', {
-        template: '<role-form></role-form>',
-        title: 'Edit Role',
-    }).
-    when('/role-pkg/role/view/:id', {
-        template: '<role-view></role-view>',
-        title: 'View Role',
-    });
-}]);
 /*Compile*/
-app.directive('compile', ['$compile', function ($compile) {
-  return function(scope, element, attrs) {
-      scope.$watch(
-        function(scope) {
-          return scope.$eval(attrs.compile);
-        },
-        function(value) {
-          element.html(value);
-          $compile(element.contents())(scope);
-        }
-      )};
+app.directive('compile', ['$compile', function($compile) {
+    return function(scope, element, attrs) {
+        scope.$watch(
+            function(scope) {
+                return scope.$eval(attrs.compile);
+            },
+            function(value) {
+                element.html(value);
+                $compile(element.contents())(scope);
+            }
+        )
+    };
 }]);
 
 app.component('roleList', {
@@ -252,14 +232,14 @@ app.component('roleForm', {
         }
         $(document).on("change", ".parent_checkbox", function() {
             // var id = $(this).data('ids');
-            $(this).parent().next().find('input[type=checkbox]').prop('checked',this.checked);
+            $(this).parent().next().find('input[type=checkbox]').prop('checked', this.checked);
             // var uncheck_child = $(this).parent().parent().siblings().find('input[type=checkbox]:checked').length;
             var children_uncheck = $(this).parentsUntil('ul.n_roles').siblings('li').find(':checked').length;
             // go up the hierarchy - and check/uncheck depending on number of children checked/unchecked
-            $(this).parents('ul').prev('div').find('input[type=checkbox]').prop('checked',function(){
+            $(this).parents('ul').prev('div').find('input[type=checkbox]').prop('checked', function() {
                 if ($(this).prop('checked') == true && children_uncheck == 0) {
-                        return $(this).parent().prev().find(':checked').length;
-                } 
+                    return $(this).parent().prev().find(':checked').length;
+                }
                 return $(this).parent().next().find(':checked').length;
             });
             // if ($(this).prop("checked") == true) {
@@ -514,14 +494,14 @@ app.component('roleView', {
 
         $(document).on("change", ".parent_checkbox", function() {
             // var id = $(this).data('ids');
-            $(this).parent().next().find('input[type=checkbox]').prop('checked',this.checked);
+            $(this).parent().next().find('input[type=checkbox]').prop('checked', this.checked);
             // var uncheck_child = $(this).parent().parent().siblings().find('input[type=checkbox]:checked').length;
             var children_uncheck = $(this).parentsUntil('ul.n_roles').siblings('li').find(':checked').length;
             // go up the hierarchy - and check/uncheck depending on number of children checked/unchecked
-            $(this).parents('ul').prev('div').find('input[type=checkbox]').prop('checked',function(){
+            $(this).parents('ul').prev('div').find('input[type=checkbox]').prop('checked', function() {
                 if ($(this).prop('checked') == true && children_uncheck == 0) {
-                        return $(this).parent().prev().find(':checked').length;
-                } 
+                    return $(this).parent().prev().find(':checked').length;
+                }
                 return $(this).parent().next().find(':checked').length;
             });
         });

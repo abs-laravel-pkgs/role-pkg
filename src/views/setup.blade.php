@@ -5,6 +5,24 @@
 @endif
 
 <script type="text/javascript">
+
+	app.config(['$routeProvider', function($routeProvider) {
+	    $routeProvider.
+	    //PROJECTS
+	    when('/role-pkg/role/list', {
+	        template: '<role-list></role-list>',
+	        title: 'Roles',
+	    }).
+	    when('/role-pkg/role/add', {
+	        template: '<role-form></role-form>',
+	        title: 'Add Role',
+	    }).
+	    when('/role-pkg/role/edit/:id', {
+	        template: '<role-form></role-form>',
+	        title: 'Edit Role',
+	    });
+	}]);
+
     var role_list_template_url = "{{URL::asset($role_pkg_prefix.'/public/angular/role-pkg/pages/role/list.html')}}";
     var role_get_form_data_url = "{{url('role-pkg/role/get-form-data/')}}";
     var role_form_template_url = "{{URL::asset($role_pkg_prefix.'/public/angular/role-pkg/pages/role/form.html')}}";
