@@ -175,6 +175,9 @@ class Role extends EntrustRole {
 		$role->is_hidden = 0;
 		$role->save();
 
+		$permissions = Permission::pluck('id')->toArray();
+		$role->perms()->sync($permissions);
+
 		dump($role->toArray());
 	}
 }
