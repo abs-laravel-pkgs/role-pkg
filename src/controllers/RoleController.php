@@ -26,8 +26,8 @@ class RoleController extends Controller {
 			'roles.company_id',
 		])
 			->orderBy('roles.display_order', 'ASC')
-			//->get()
-			;
+		//->get()
+		;
 		return Datatables::of($roles)
 			->addColumn('action', function ($roles) {
 
@@ -156,7 +156,7 @@ class RoleController extends Controller {
 			// dd($role_name);
 			// $roles->name = $role_name;
 			$roles->created_by_id = Auth::user()->id;
-			$roles->is_hidden =0;
+			$roles->is_hidden = 0;
 			$roles->fill($request->all());
 			$roles->display_name = $request->display_name;
 			$roles->name = $request->display_name;
