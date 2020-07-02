@@ -237,7 +237,7 @@ class Role extends EntrustRole {
 				$success++;
 
 			} catch (Exception $e) {
-				dd($e);
+				dump($e);
 			}
 		}
 		dump($success . ' Records Processed');
@@ -266,11 +266,6 @@ class Role extends EntrustRole {
 		$permission = Permission::where('name', $record_data->permission_name)->first();
 		if (!$permission) {
 			$errors[] = 'Invalid permission : ' . $record_data->permission_name;
-		}
-
-		if (count($errors) > 0) {
-			dump($errors);
-			return;
 		}
 
 		if (count($errors) > 0) {
