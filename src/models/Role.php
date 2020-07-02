@@ -1,6 +1,7 @@
 <?php
 
 namespace Abs\RolePkg;
+use Abs\HelperPkg\Traits\SeederTrait;
 use App\Company;
 use App\Permission;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -8,6 +9,7 @@ use Zizaco\Entrust\EntrustRole;
 
 class Role extends EntrustRole {
 	use SoftDeletes;
+	use SeederTrait;
 	Protected $fillable = [
 		'id',
 		'company_id',
@@ -21,6 +23,29 @@ class Role extends EntrustRole {
 		'deleted_by_id',
 		'fixed_roles',
 	];
+
+	protected static $excelColumnRules = [
+		'Name' => [
+			'table_column_name' => 'name',
+			'rules' => [
+				'required' => [
+				],
+			],
+		],
+		'Display Name' => [
+			'table_column_name' => 'display_name',
+			'rules' => [
+				'required' => [
+				],
+			],
+		],
+		'Description' => [
+			'table_column_name' => 'description',
+			'rules' => [
+			],
+		],
+	];
+
 	public function users() {
 		return $this->belongsToMany('App\User');
 	}
@@ -95,44 +120,44 @@ class Role extends EntrustRole {
 		return $permission_data_list;
 	}
 
-	public static function createFromCollection($records) {
-		foreach ($records as $key => $record_data) {
-			try {
-				if (!$record_data->company) {
-					continue;
+	/*public static function createFromCollection($records) {
+			foreach ($records as $key => $record_data) {
+				try {
+					if (!$record_data->company) {
+						continue;
+					}
+					$record = self::createFromObject($record_data);
+				} catch (Exception $e) {
+					dd($e);
 				}
-				$record = self::createFromObject($record_data);
-			} catch (Exception $e) {
-				dd($e);
 			}
 		}
-	}
 
-	public static function createFromObject($record_data) {
-		$company = Company::where('code', $record_data->company)->first();
-		$admin = $company->admin();
+		public static function createFromObject($record_data) {
+			$company = Company::where('code', $record_data->company)->first();
+			$admin = $company->admin();
 
-		$errors = [];
-		if (!$company) {
-			$company_id = $company->id;
-		} else {
-			$company_id = null;
+			$errors = [];
+			if (!$company) {
+				$company_id = $company->id;
+			} else {
+				$company_id = null;
+			}
+
+			if (count($errors) > 0) {
+				dump($errors);
+				return;
+			}
+
+			$record = self::firstOrNew([
+				'id' => $record_data->id,
+			]);
+			$record->name = $record_data->name;
+			$record->display_name = $record_data->name;
+			$record->save();
+			return $record;
 		}
-
-		if (count($errors) > 0) {
-			dump($errors);
-			return;
-		}
-
-		$record = self::firstOrNew([
-			'id' => $record_data->id,
-		]);
-		$record->name = $record_data->name;
-		$record->display_name = $record_data->name;
-		$record->save();
-		return $record;
-	}
-
+	*/
 	public static function mapPermissions($records) {
 		foreach ($records as $key => $record_data) {
 			try {
@@ -179,5 +204,73 @@ class Role extends EntrustRole {
 		$role->perms()->sync($permissions);
 
 		dump($role->toArray());
+	}
+
+	public static function saveFromObject($record_data) {
+		$record = [
+			'Company Code' => $record_data->company_code,
+			'Name' => $record_data->name,
+			'Display Name' => $record_data->display_name,
+			'Description' => $record_data->description,
+		];
+		return static::saveFromExcelArray($record);
+	}
+
+	public static function saveFromExcelArray($record_data) {
+		try {
+			$errors = [];
+			$company = Company::where('code', $record_data['Company Code'])->first();
+			if (!$company) {
+				return [
+					'success' => false,
+					'errors' => ['Invalid Company : ' . $record_data['Company Code']],
+				];
+			}
+
+			if (!isset($record_data['created_by'])) {
+				$admin = $company->admin();
+
+				if (!$admin) {
+					return [
+						'success' => false,
+						'errors' => ['Default Admin user not found'],
+					];
+				}
+				$created_by_id = $admin->id;
+			} else {
+				$created_by_id = $record_data['created_by'];
+			}
+
+			if (count($errors) > 0) {
+				return [
+					'success' => false,
+					'errors' => $errors,
+				];
+			}
+
+			$record = Self::firstOrNew([
+				'company_id' => $company->id,
+				'name' => $record_data['Name'],
+			]);
+
+			$result = Self::validateAndFillExcelColumns($record_data, Static::$excelColumnRules, $record);
+			if (!$result['success']) {
+				return $result;
+			}
+
+			$record->company_id = $company->id;
+			$record->created_by = $created_by_id;
+			$record->save();
+			return [
+				'success' => true,
+			];
+		} catch (\Exception $e) {
+			return [
+				'success' => false,
+				'errors' => [
+					$e->getMessage(),
+				],
+			];
+		}
 	}
 }
