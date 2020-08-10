@@ -120,77 +120,80 @@ class Role extends EntrustRole {
 		return $permission_data_list;
 	}
 
-	/*public static function createFromCollection($records) {
-			foreach ($records as $key => $record_data) {
-				try {
-					if (!$record_data->company) {
-						continue;
-					}
-					$record = self::createFromObject($record_data);
-				} catch (Exception $e) {
-					dd($e);
-				}
-			}
-		}
 
-		public static function createFromObject($record_data) {
-			$company = Company::where('code', $record_data->company)->first();
-			$admin = $company->admin();
-
-			$errors = [];
-			if (!$company) {
-				$company_id = $company->id;
-			} else {
-				$company_id = null;
-			}
-
-			if (count($errors) > 0) {
-				dump($errors);
-				return;
-			}
-
-			$record = self::firstOrNew([
-				'id' => $record_data->id,
-			]);
-			$record->name = $record_data->name;
-			$record->display_name = $record_data->name;
-			$record->save();
-			return $record;
-		}
-	*/
 	public static function mapPermissions($records) {
+		$success = 0;
+		$error_records = [];
 		foreach ($records as $key => $record_data) {
 			try {
-				if (!$record_data->role) {
+				if (!$record_data->role_name) {
 					continue;
 				}
-				$record = self::mapPermission($record_data);
+				//$record = [
+				//	'Role Name' => $record_data->role_name,
+				//	'Permission Name' => $record_data->permission_name,
+				//];
+				//$result = self::mapPermission($record);
+
+				$status = self::mapPermission($record_data);
+				if (!$status['success']) {
+					$error_records[] = array_merge($record_data->toArray(), [
+						'Record No' => $key + 1,
+						'Errors' => implode(',', $status['errors']),
+					]);
+					continue;
+				}
+				$success++;
 			} catch (Exception $e) {
-				dd($e);
+				dump($e);
 			}
 		}
+		dump($success . ' Records Success');
+		dump(count($error_records) . ' Errors');
+		dump($error_records);
+		return $error_records;
+
 	}
 
 	public static function mapPermission($record_data) {
-		$errors = [];
-		$role = Role::where('name', $record_data->role)->first();
-		if (!$role) {
-			$errors[] = 'Invalid role : ' . $record_data->role;
+		try {
+			$errors = [];
+			//$company = Company::where('code', $record_data['Company Code'])->first();
+			//if (!$company) {
+			//	return [
+			//		'success' => false,
+			//		'errors' => ['Invalid Company : ' . $record_data['Company Code']],
+			//	];
+			//}
+			$role = Role::where('name', $record_data->role_name)->first();
+			if (!$role) {
+				$errors[] = 'Invalid role : ' . $record_data->role_name;
+			}
+
+			$permission = Permission::where('name', $record_data->permission_name)->first();
+			if (!$permission) {
+				$errors[] = 'Invalid permission : ' . $record_data->permission_name;
+			}
+
+			if (count($errors) > 0) {
+				return [
+					'success' => false,
+					'errors' => $errors,
+				];
+			}
+			$role->perms()->syncWithoutDetaching([$permission->id]);
+
+			return [
+				'success' => true,
+			];
+		} catch (\Exception $e) {
+			return [
+				'success' => false,
+				'errors' => [
+					$e->getMessage(),
+				],
+			];
 		}
-
-		$permission = Permission::where('name', $record_data->permission)->first();
-		if (!$permission) {
-			$errors[] = 'Invalid permission : ' . $record_data->permission;
-		}
-
-		if (count($errors) > 0) {
-			dump($errors);
-			return;
-		}
-
-		$role->perms()->syncWithoutDetaching([$permission->id]);
-
-		return $role;
 	}
 
 	public static function createFromName($data) {
@@ -258,6 +261,8 @@ class Role extends EntrustRole {
 				return $result;
 			}
 
+			$record->display_name = $record_data['Display Name'];
+			$record->description = $record_data['Description'];
 			$record->company_id = $company->id;
 			$record->created_by = $created_by_id;
 			$record->save();
