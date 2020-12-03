@@ -73,9 +73,10 @@ class RolesU1 extends Migration {
 			$table->unsignedInteger('deleted_by_id')->nullable()->after('updated_by_id');
 			$table->softdeletes();
 
-			$table->foreign('created_by_id')->references('id')->on('users')->onDelete('SET NULL')->onUpdate('cascade');
-			$table->foreign('updated_by_id')->references('id')->on('users')->onDelete('SET NULL')->onUpdate('cascade');
-			$table->foreign('deleted_by_id')->references('id')->on('users')->onDelete('SET NULL')->onUpdate('cascade');
+			$table->foreign('company_id')->references('id')->on('companies')->onUpdate('cascade');
+			$table->foreign('created_by_id')->references('id')->on('users')->onUpdate('cascade');
+			$table->foreign('updated_by_id')->references('id')->on('users')->onUpdate('cascade');
+			$table->foreign('deleted_by_id')->references('id')->on('users')->onUpdate('cascade');
 
 		});
 	}
